@@ -4,6 +4,8 @@ import "../App.css";
 import { fetchDevices } from "./api/devicesApi";
 import { submitEmployee, handleDeleteEmployee } from "./hooks/useEmployees";
 import { handleDeleteDevice, submitDevice } from "./hooks/useDevices";
+import { EmployeesTab } from "./components/employees/employeTab";
+import { DevicesTab } from "./components/devices/deviceTab";
 
 const DEFAULT_EMPLOYEE_FORM = { name: "", role: "" };
 const DEFAULT_DEVICE_FORM = { name: "", type: "Laptop", ownerId: "" };
@@ -236,8 +238,7 @@ function App() {
     }
     const timer = window.setTimeout(() => setStatusMessage(""), 2500);
     return () => window.clearTimeout(timer);
-  }, [statusMessage]);
-
+  }, [statusMessage]);  
 
   // /api/employeesApi.js
   const loadAllEmployees = async () => 
@@ -383,268 +384,46 @@ function App() {
 
       <main className="app-main">
         {activeTab === "employees" ? (
-          <section className="panel">
-            <h2>{editingEmployeeId ? "Edit employee" : "Create employee"}</h2>
-            <form className="app-form" onSubmit={callSubmitEmployee}>
-              <label>
-                Name
-                <input
-                  value={employeeForm.name}
-                  onChange={(event) =>
-                    setEmployeeForm((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                  placeholder="Employee name"
-                  required
-                />
-              </label>
-              <label>
-                Role
-                <input
-                  value={employeeForm.role}
-                  onChange={(event) =>
-                    setEmployeeForm((prev) => ({
-                      ...prev,
-                      role: event.target.value,
-                    }))
-                  }
-                  placeholder="Developer"
-                  required
-                />
-              </label>
-              <div className="form-buttons">
-                <button type="submit">
-                  {editingEmployeeId ? "Update" : "Create"}
-                </button>
-                {editingEmployeeId ? (
-                  <button type="button" onClick={resetEmployeeForm}>
-                    Cancel edit
-                  </button>
-                ) : null}
-              </div>
-            </form>
-
-            <h3>Filters</h3>
-            <div className="filters">
-              <label>
-                Role filter
-                <select
-                  value={roleFilter}
-                  onChange={(event) => setRoleFilter(event.target.value)}
-                >
-                  <option value="">All</option>
-                  {roleOptions.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Search
-                <input
-                  value={employeeSearch}
-                  onChange={(event) => setEmployeeSearch(event.target.value)}
-                  placeholder="Search name / role"
-                />
-              </label>
-            </div>
-
-            <h3>Employee list {loadingEmployees ? "(loading...)" : ""}</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Role</th>
-                  <th>Devices</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEmployees.map((employee) => (
-                  <tr key={employee.id}>
-                    <td>{employee.name}</td>
-                    <td>{employee.role}</td>
-                    <td>{employee.device_count || 0}</td>
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() => beginEmployeeEdit(employee)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => callHandleDeleteEmployee(employee.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {filteredEmployees.length === 0 ? (
-                  <tr>
-                    <td colSpan="4">No employees found</td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </section>
+        <EmployeesTab
+            editingEmployeeId={editingEmployeeId}
+            callSubmitEmployee={callSubmitEmployee}
+            employeeForm={employeeForm}
+            setEmployeeForm={setEmployeeForm}
+            resetEmployeeForm={resetEmployeeForm}
+            roleFilter={roleFilter}
+            setRoleFilter={setRoleFilter}
+            roleOptions={roleOptions}
+            employeeSearch={employeeSearch}
+            setEmployeeSearch={setEmployeeSearch}
+            loadingEmployees={loadingEmployees}
+            filteredEmployees={filteredEmployees}
+            beginEmployeeEdit={beginEmployeeEdit}
+            callHandleDeleteEmployee={callHandleDeleteEmployee}
+          />
         ) : null}
 
         {activeTab === "devices" ? (
-          <section className="panel">
-            <h2>{editingDeviceId ? "Edit device" : "Create device"}</h2>
-            <form className="app-form" onSubmit={callSubmitDevice}>
-              <label>
-                Device name
-                <input
-                  value={deviceForm.name}
-                  onChange={(event) =>
-                    setDeviceForm((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                  placeholder="MacBook Pro"
-                  required
-                />
-              </label>
-              <label>
-                Type
-                <select
-                  value={deviceForm.type}
-                  onChange={(event) =>
-                    setDeviceForm((prev) => ({
-                      ...prev,
-                      type: event.target.value,
-                    }))
-                  }
-                >
-                  <option value="Laptop">Laptop</option>
-                  <option value="Peripheral">Peripheral</option>
-                  <option value="Display">Display</option>
-                  <option value="Mobile">Mobile</option>
-                </select>
-              </label>
-              <label>
-                Owner
-                <select
-                  value={deviceForm.ownerId}
-                  onChange={(event) =>
-                    setDeviceForm((prev) => ({
-                      ...prev,
-                      ownerId: event.target.value,
-                    }))
-                  }
-                >
-                  <option value="">Unassigned</option>
-                  {employees.map((employee) => (
-                    <option key={employee.id} value={employee.id}>
-                      {employee.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="form-buttons">
-                <button type="submit">
-                  {editingDeviceId ? "Update" : "Create"}
-                </button>
-                {editingDeviceId ? (
-                  <button type="button" onClick={resetDeviceForm}>
-                    Cancel edit
-                  </button>
-                ) : null}
-              </div>
-            </form>
-
-            <h3>Filters</h3>
-            <div className="filters">
-              <label>
-                Type filter
-                <select
-                  value={deviceTypeFilter}
-                  onChange={(event) => setDeviceTypeFilter(event.target.value)}
-                >
-                  <option value="">All</option>
-                  {deviceTypeOptions.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Owner filter
-                <select
-                  value={deviceOwnerFilter}
-                  onChange={(event) => setDeviceOwnerFilter(event.target.value)}
-                >
-                  <option value="">All</option>
-                  {employees.map((employee) => (
-                    <option key={employee.id} value={employee.id}>
-                      {employee.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Search
-                <input
-                  value={deviceSearch}
-                  onChange={(event) => setDeviceSearch(event.target.value)}
-                  placeholder="Search name / type"
-                />
-              </label>
-            </div>
-
-            <h3>
-              Device list {loadingDevices ? "(loading...)" : ""}{" "}
-              {loadingOwnerNames ? "(resolving owners...)" : ""}
-            </h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Owner</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDevices.map((device) => (
-                  <tr key={device.id}>
-                    <td>{device.name}</td>
-                    <td>{device.type}</td>
-                    <td>
-                      {ownerNameById[String(device.owner_id)] || "Unassigned"}
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() => beginDeviceEdit(device)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => callHandleDeleteDevice(device.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {filteredDevices.length === 0 ? (
-                  <tr>
-                    <td colSpan="4">No devices found</td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </section>
+          <DevicesTab
+            editingDeviceId={editingDeviceId}
+            callSubmitDevice={callSubmitDevice}
+            deviceForm={deviceForm}
+            setDeviceForm={setDeviceForm}
+            resetDeviceForm={resetDeviceForm}
+            employees={employees}
+            deviceTypeFilter={deviceTypeFilter}
+            setDeviceTypeFilter={setDeviceTypeFilter}
+            deviceTypeOptions={deviceTypeOptions}
+            deviceOwnerFilter={deviceOwnerFilter}
+            setDeviceOwnerFilter={setDeviceOwnerFilter}
+            deviceSearch={deviceSearch}
+            setDeviceSearch={setDeviceSearch}
+            loadingDevices={loadingDevices}
+            loadingOwnerNames={loadingOwnerNames}
+            filteredDevices={filteredDevices}
+            ownerNameById={ownerNameById}
+            beginDeviceEdit={beginDeviceEdit}
+            callHandleDeleteDevice={callHandleDeleteDevice}
+          />
         ) : null}
       </main>
     </div>
