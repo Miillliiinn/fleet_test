@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import "./App.css";
+import { fetchEmployees } from "./api/employeesApi";
+import "../App.css";
+import { fetchDevices } from "./api/devicesApi";
+import { submitEmployee, handleDeleteEmployee } from "./hooks/useEmployees";
+import { handleDeleteDevice, submitDevice } from "./hooks/useDevices";
 
 const DEFAULT_EMPLOYEE_FORM = { name: "", role: "" };
 const DEFAULT_DEVICE_FORM = { name: "", type: "Laptop", ownerId: "" };
@@ -98,8 +102,8 @@ function App() {
   }, [deviceOwnerFilter]);
 
   useEffect(() => {
-    fetchEmployees();
-    fetchDevices();
+    loadAllEmployees();
+    loadAllDevice();
   }, []);
 
   useEffect(() => {
@@ -234,157 +238,41 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
 
-  async function fetchEmployees() {
-    setLoadingEmployees(true);
-    setErrors([]);
-    try {
-      const response = await fetch("/api/employees");
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json.message || "Could not load employees");
-      }
-      setEmployees(Array.isArray(json) ? json : []);
-      setLastRefreshAt(new Date().toISOString());
-    } catch (error) {
-      setErrors((prev) => [
-        ...prev,
-        `Employees fetch failed: ${error.message}`,
-      ]);
-    } finally {
-      setLoadingEmployees(false);
-    }
+
+  // /api/employeesApi.js
+  const loadAllEmployees = async () => 
+  {
+    await fetchEmployees( { setEmployees, setLoadingEmployees, setErrors, setLastRefreshAt } )
   }
 
-  async function fetchDevices() {
-    setLoadingDevices(true);
-    try {
-      const response = await fetch("/api/devices");
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json.message || "Could not load devices");
-      }
-      setDevices(Array.isArray(json) ? json : []);
-      setLastRefreshAt(new Date().toISOString());
-    } catch (error) {
-      setErrors((prev) => [...prev, `Devices fetch failed: ${error.message}`]);
-    } finally {
-      setLoadingDevices(false);
-    }
+  // /api/deviceApi.js
+  const loadAllDevice = async () =>
+  {
+    await fetchDevices( { setLoadingDevices, setDevices, setLastRefreshAt, setErrors } );
   }
 
-  async function submitEmployee(event) {
-    event.preventDefault();
-
-    const payload = {
-      name: employeeForm.name,
-      role: employeeForm.role,
-    };
-
-    const isEditing = Boolean(editingEmployeeId);
-    const url = isEditing
-      ? `/api/employees/${editingEmployeeId}`
-      : "/api/employees";
-    const method = isEditing ? "PUT" : "POST";
-
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json.message || "Could not save employee");
-      }
-      setStatusMessage(isEditing ? "Employee updated" : "Employee created");
-      setEmployeeForm(DEFAULT_EMPLOYEE_FORM);
-      setEditingEmployeeId(null);
-      await fetchEmployees();
-      await fetchDevices();
-    } catch (error) {
-      setErrors((prev) => [...prev, `Employee save failed: ${error.message}`]);
-    }
+  // /hooks/useEmployees.js
+  const callSubmitEmployee = async (event) =>
+  {
+    await submitEmployee(event, {employeeForm, editingEmployeeId, setStatusMessage, setEmployeeForm, setEditingEmployeeId, setErrors, loadAllEmployees, loadAllDevice, DEFAULT_EMPLOYEE_FORM});
   }
 
-  async function submitDevice(event) {
-    event.preventDefault();
-
-    const payload = {
-      name: deviceForm.name,
-      type: deviceForm.type,
-      ownerId: deviceForm.ownerId || null,
-    };
-
-    const isEditing = Boolean(editingDeviceId);
-    const url = isEditing ? `/api/devices/${editingDeviceId}` : "/api/devices";
-    const method = isEditing ? "PUT" : "POST";
-
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json.message || "Could not save device");
-      }
-      setStatusMessage(isEditing ? "Device updated" : "Device created");
-      setDeviceForm(DEFAULT_DEVICE_FORM);
-      setEditingDeviceId(null);
-      await fetchDevices();
-      await fetchEmployees();
-    } catch (error) {
-      setErrors((prev) => [...prev, `Device save failed: ${error.message}`]);
-    }
+  // /hooks/useDevices.js
+  const callSubmitDevice = async (event) =>
+  {
+    await submitDevice(event, { deviceForm, editingDeviceId, setStatusMessage, setDeviceForm, setEditingDeviceId, DEFAULT_DEVICE_FORM, loadAllDevice, loadAllEmployees, setErrors});
   }
 
-  async function handleDeleteEmployee(employeeId) {
-    const isConfirmed = window.confirm(
-      "Delete employee and unassign their devices?",
-    );
-    if (!isConfirmed) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/employees/${employeeId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        const json = await response.json();
-        throw new Error(json.message || "Could not delete employee");
-      }
-      setStatusMessage("Employee deleted");
-      await fetchEmployees();
-    } catch (error) {
-      setErrors((prev) => [
-        ...prev,
-        `Employee delete failed: ${error.message}`,
-      ]);
-    }
+  // /hooks/useEmployees.js
+  const callHandleDeleteEmployee = async (employeeId) =>
+  {
+    await handleDeleteEmployee(employeeId, {setStatusMessage, setErrors, setEmployees, setLoadingEmployees, setLastRefreshAt});
   }
 
-  async function handleDeleteDevice(deviceId) {
-    const isConfirmed = window.confirm("Delete this device?");
-    if (!isConfirmed) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/devices/${deviceId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        const json = await response.json();
-        throw new Error(json.message || "Could not delete device");
-      }
-      setStatusMessage("Device deleted");
-      await fetchDevices();
-      await fetchEmployees();
-    } catch (error) {
-      setErrors((prev) => [...prev, `Device delete failed: ${error.message}`]);
-    }
+  // /hooks/useDevices.js
+  const callHandleDeleteDevice = async (deviceId) =>
+  {
+    await handleDeleteDevice(deviceId, {setStatusMessage, setErrors, loadAllDevice, loadAllEmployees});
   }
 
   function clearErrorStack() {
@@ -464,8 +352,8 @@ function App() {
         <button
           type="button"
           onClick={() => {
-            fetchEmployees();
-            fetchDevices();
+            loadAllEmployees();
+            loadAllDevice();
           }}
         >
           Manual refresh
@@ -497,7 +385,7 @@ function App() {
         {activeTab === "employees" ? (
           <section className="panel">
             <h2>{editingEmployeeId ? "Edit employee" : "Create employee"}</h2>
-            <form className="app-form" onSubmit={submitEmployee}>
+            <form className="app-form" onSubmit={callSubmitEmployee}>
               <label>
                 Name
                 <input
@@ -589,7 +477,7 @@ function App() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDeleteEmployee(employee.id)}
+                        onClick={() => callHandleDeleteEmployee(employee.id)}
                       >
                         Delete
                       </button>
@@ -609,7 +497,7 @@ function App() {
         {activeTab === "devices" ? (
           <section className="panel">
             <h2>{editingDeviceId ? "Edit device" : "Create device"}</h2>
-            <form className="app-form" onSubmit={submitDevice}>
+            <form className="app-form" onSubmit={callSubmitDevice}>
               <label>
                 Device name
                 <input
@@ -742,7 +630,7 @@ function App() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDeleteDevice(device.id)}
+                        onClick={() => callHandleDeleteDevice(device.id)}
                       >
                         Delete
                       </button>
