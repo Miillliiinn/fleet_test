@@ -1,0 +1,1 @@
+-1 . Apres avoir clone le repo, j'ai voulu lance le server avec npm run start comme le precise le readme hors express n'etait pas installe, npm install express plus tard, j'ai retenter et les root son correct et fonctionnel.
