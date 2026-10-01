@@ -55,7 +55,8 @@ export function updateCartItem(req, res) // patch /api/cart/:productId
   const { productId } = req.params;
   const { quantity } = req.body;
 
-  if (!Number.isInteger(quantity) || quantity < 1) {
+  if (!Number.isInteger(quantity) || quantity < 1)
+  {
     return res
       .status(400)
       .json({ message: "quantity must be an integer >= 1" });
