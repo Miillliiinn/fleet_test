@@ -9,7 +9,6 @@ import healthRouter from "./routes/health.js";
 import cartRouter from "./routes/panier_items.js";
 import productRouter from "./routes/products.js";
 import orderRouter from "./routes/orders.js"
-import order_itemsRouter from "./routes/order_items.js"
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,4 +28,3 @@ app.use("/api/health", healthRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/products", productRouter);
 app.use("/api/orders", orderRouter);
-app.use("/api/order_items", orderRouter);
