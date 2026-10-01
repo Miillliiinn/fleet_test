@@ -6,6 +6,13 @@ import { submitEmployee, handleDeleteEmployee } from "./hooks/useEmployees";
 import { handleDeleteDevice, submitDevice } from "./hooks/useDevices";
 import { EmployeesTab } from "./components/employees/employeTab";
 import { DevicesTab } from "./components/devices/deviceTab";
+import { fetchCart } from "./api/cartApi";
+import { addToCart, updateCartQuantity, remoceFromCart } from "./hooks/useCart";
+import { createOrder } from "./hooks/useOrders";
+import { fetchOrders } from "./api/ordersApi";
+import { fetchProducts } from "./api/productApi";
+import { CatalogTab } from "./components/catalog/catalogTab";
+import { OrdersTab } from "./components/orders/ordersTab";
 
 const DEFAULT_EMPLOYEE_FORM = { name: "", role: "" };
 const DEFAULT_DEVICE_FORM = { name: "", type: "Laptop", ownerId: "" };
@@ -27,8 +34,8 @@ function App() {
   const [editingDeviceId, setEditingDeviceId] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [errors, setErrors] = useState([]);
-  const [loadingEmployees, setLoadingEmployees] = useState(false);
-  const [loadingDevices, setLoadingDevices] = useState(false);
+  const [loadingEmployees, setLoadingEmployees] = useState(false); //
+  const [loadingDevices, setLoadingDevices] = useState(false); //
   const [dashboardState, setDashboardState] = useState({
     totalEmployees: 0,
     totalDevices: 0,
@@ -37,6 +44,17 @@ function App() {
   const [ownerNameById, setOwnerNameById] = useState({});
   const [loadingOwnerNames, setLoadingOwnerNames] = useState(false);
   const [lastRefreshAt, setLastRefreshAt] = useState("");
+
+  // --
+
+  const [products , setProducts] = useState([]);
+  const [cart, setCart] = useState({items: [], total: 0});
+  const [orders, setOrders] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingCart, setLoadingCart] = useState(false);
+  const [loadingOrders, setLoadingOrders] =useState(false);
+
+  // --
 
   const roleOptions = useMemo(() => {
     const set = new Set();
@@ -79,11 +97,18 @@ function App() {
       setDeviceOwnerFilter(savedOwnerFilter);
     }
 
-    if (hash === "employees" || hash === "devices") {
+    const TABS = ["employees", "devices", "catalog", "orders"];
+
+    if (TABS.includes(hash)) {
       setActiveTab(hash);
-    } else if (savedTab === "employees" || savedTab === "devices") {
+    } else if (TABS.includes(savedTab)) {
       setActiveTab(savedTab);
     }
+    // if (hash === "employees" || hash === "devices" || hash === "catalog" || hash === "orders") {
+    //   setActiveTab(hash);
+    // } else if (savedTab === "employees" || savedTab === "devices" || hash === "catalog" || hash === "orders") {
+    //   setActiveTab(savedTab);
+    // }
   }, []);
 
   useEffect(() => {
@@ -107,6 +132,18 @@ function App() {
     loadAllEmployees();
     loadAllDevice();
   }, []);
+
+  // --
+  useEffect(() => {
+    if (activeTab === "catalog") {
+      loadProducts();
+      loadCart();
+    }
+    if (activeTab === "orders") {
+      loadOrders();
+    }
+  }, [activeTab]);
+  // --
 
   useEffect(() => {
     if (activeTab !== "devices") {
@@ -245,35 +282,66 @@ function App() {
   {
     await fetchEmployees( { setEmployees, setLoadingEmployees, setErrors, setLastRefreshAt } )
   }
+  // /hooks/useEmployees.js
+  const callSubmitEmployee = async (event) =>
+  {
+    await submitEmployee(event, {employeeForm, editingEmployeeId, setStatusMessage, setEmployeeForm, setEditingEmployeeId, setErrors, loadAllEmployees, loadAllDevice, DEFAULT_EMPLOYEE_FORM});
+  }
+  const callHandleDeleteEmployee = async (employeeId) =>
+  {
+    await handleDeleteEmployee(employeeId, {setStatusMessage, setErrors, setEmployees, setLoadingEmployees, setLastRefreshAt});
+  }
 
   // /api/deviceApi.js
   const loadAllDevice = async () =>
   {
     await fetchDevices( { setLoadingDevices, setDevices, setLastRefreshAt, setErrors } );
   }
-
-  // /hooks/useEmployees.js
-  const callSubmitEmployee = async (event) =>
-  {
-    await submitEmployee(event, {employeeForm, editingEmployeeId, setStatusMessage, setEmployeeForm, setEditingEmployeeId, setErrors, loadAllEmployees, loadAllDevice, DEFAULT_EMPLOYEE_FORM});
-  }
-
   // /hooks/useDevices.js
   const callSubmitDevice = async (event) =>
   {
     await submitDevice(event, { deviceForm, editingDeviceId, setStatusMessage, setDeviceForm, setEditingDeviceId, DEFAULT_DEVICE_FORM, loadAllDevice, loadAllEmployees, setErrors});
   }
-
-  // /hooks/useEmployees.js
-  const callHandleDeleteEmployee = async (employeeId) =>
-  {
-    await handleDeleteEmployee(employeeId, {setStatusMessage, setErrors, setEmployees, setLoadingEmployees, setLastRefreshAt});
-  }
-
-  // /hooks/useDevices.js
   const callHandleDeleteDevice = async (deviceId) =>
   {
     await handleDeleteDevice(deviceId, {setStatusMessage, setErrors, loadAllDevice, loadAllEmployees});
+  }
+
+
+  // /api/cartApi.ts
+  const loadCart = async (productsId) =>
+  {
+    await fetchCart({setCart, setLoadingCart, setErrors});
+  }
+  // /hooks/useCart.js
+  const callAddToCart = async (event, productId) =>
+  {
+    await addToCart(event, productId, {setErrors, loadCart});
+  }
+  const callUpdateCartQuantity = async (event, productId) =>
+  {
+    await updateCartQuantity(event, productId, { setErrors, loadCart });
+  }
+  const callRemoceFromCart = async (event, productId) =>
+  {
+    await remoceFromCart(event, productId, {setErrors, loadCart});
+  }
+
+  // /api/orders.js
+  const loadOrders = async () =>
+  {
+    await fetchOrders({ setOrders, setLoadingOrders, setErrors });
+  }
+  // /hooks/useOrders.js
+  const callCreateOrder = async (event) =>
+  {
+    await createOrder(event, {setStatusMessage, setErrors, loadCart, loadOrders});
+  }
+
+  // api/productApi.js
+  const loadProducts = async () => 
+  {
+    await fetchProducts({ setProducts, setLoadingProducts, setErrors });
   }
 
   function clearErrorStack() {
@@ -359,6 +427,25 @@ function App() {
         >
           Manual refresh
         </button>
+
+        <button
+          className={
+            activeTab === "catalog" ? "tab-button active" : "tab-button"
+          }
+          onClick={() => setActiveTab("catalog")}
+          type="button"
+        >
+          Catalog
+        </button>
+        <button
+          className={
+            activeTab === "orders" ? "tab-button active" : "tab-button"
+          }
+          onClick={() => setActiveTab("orders")}
+          type="button"
+        >
+          Orders
+        </button>
       </div>
 
       {statusMessage ? <p className="status success">{statusMessage}</p> : null}
@@ -424,6 +511,23 @@ function App() {
             beginDeviceEdit={beginDeviceEdit}
             callHandleDeleteDevice={callHandleDeleteDevice}
           />
+        ) : null}
+
+        {activeTab === "catalog" ? (
+          <CatalogTab
+            products={products}
+            loadingProducts={loadingProducts}
+            cart={cart}
+            loadingCart={loadingCart}
+            callAddToCart={callAddToCart}
+            callUpdateCartQuantity={callUpdateCartQuantity}
+            callRemoveFromCart={callRemoceFromCart}
+            callCreateOrder={callCreateOrder}
+          />
+        ) : null}
+
+        {activeTab === "orders" ? (
+          <OrdersTab orders={orders} loadingOrders={loadingOrders} />
         ) : null}
       </main>
     </div>
