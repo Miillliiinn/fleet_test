@@ -17,7 +17,6 @@ export const db = new sqlite3.Database(dbPath, (err) => {
 
 export const initDB = () => {
   db.serialize(() => {
-    db.run("PRAGMA foreign_keys = ON"); // -- //
     db.run(`
       CREATE TABLE IF NOT EXISTS employees (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,5 +75,8 @@ export const initDB = () => {
         FOREIGN KEY (order_id) REFERENCES orders(id)
       )
     `);
+
+  // --
+  
   });
 };
