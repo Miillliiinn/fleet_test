@@ -32,7 +32,7 @@ export async function updateCartQuantity(event, productId, {setErrors, loadCart}
         const res = await fetch (`/api/cart/${productId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(quantity),
+            body: JSON.stringify({quantity}),
         });
         const json = await res.json();
         if (!res.ok)

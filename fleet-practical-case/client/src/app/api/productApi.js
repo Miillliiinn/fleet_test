@@ -1,4 +1,5 @@
-export async function fetchProducts( setProducts, setLoadingProducts, setErrors )
+// Faux : le nom ne correspond pas à celui de App.js
+export async function fetchProducts({ setProducts, setLoadingProducts, setErrors })
 {
     setLoadingProducts(true);
     try
@@ -9,6 +10,7 @@ export async function fetchProducts( setProducts, setLoadingProducts, setErrors 
         {
             throw new Error(json.message || "Could not load products");
         }
+        setProducts(json);
     }
     catch (error)
     {

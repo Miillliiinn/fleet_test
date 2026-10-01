@@ -78,5 +78,24 @@ export const initDB = () => {
 
   // --
   
+    // Seed : produits de test (uniquement si la table est vide)
+    db.get("SELECT COUNT(*) AS count FROM products", (err, row) => {
+      if (err || row.count > 0) return;
+
+      db.run(`
+        INSERT INTO products (name, category, price) VALUES
+          ('MacBook Pro 14"', 'Laptop', 1999),
+          ('Dell XPS 13', 'Laptop', 1299),
+          ('Lenovo ThinkPad X1', 'Laptop', 1599),
+          ('iPhone 15', 'Mobile', 969),
+          ('Samsung Galaxy S24', 'Mobile', 899),
+          ('Dell UltraSharp 27"', 'Display', 449),
+          ('LG UltraFine 32"', 'Display', 699),
+          ('Logitech MX Keys', 'Peripheral', 119),
+          ('Logitech MX Master 3S', 'Peripheral', 99),
+          ('Apple Magic Trackpad', 'Peripheral', 149)
+      `);
+    });
+
   });
 };

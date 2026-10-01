@@ -97,11 +97,18 @@ function App() {
       setDeviceOwnerFilter(savedOwnerFilter);
     }
 
-    if (hash === "employees" || hash === "devices" || hash === "catalog" || hash === "orders") {
+    const TABS = ["employees", "devices", "catalog", "orders"];
+
+    if (TABS.includes(hash)) {
       setActiveTab(hash);
-    } else if (savedTab === "employees" || savedTab === "devices" || hash === "catalog" || hash === "orders") {
+    } else if (TABS.includes(savedTab)) {
       setActiveTab(savedTab);
     }
+    // if (hash === "employees" || hash === "devices" || hash === "catalog" || hash === "orders") {
+    //   setActiveTab(hash);
+    // } else if (savedTab === "employees" || savedTab === "devices" || hash === "catalog" || hash === "orders") {
+    //   setActiveTab(savedTab);
+    // }
   }, []);
 
   useEffect(() => {
@@ -127,15 +134,15 @@ function App() {
   }, []);
 
   // --
-  // useEffect(() => {
-  //   if (activeTab === "catalog") {
-  //     loadProducts();
-  //     loadCart();
-  //   }
-  //   if (activeTab === "orders") {
-  //     loadOrders();
-  //   }
-  // }, [activeTab]);
+  useEffect(() => {
+    if (activeTab === "catalog") {
+      loadProducts();
+      loadCart();
+    }
+    if (activeTab === "orders") {
+      loadOrders();
+    }
+  }, [activeTab]);
   // --
 
   useEffect(() => {
