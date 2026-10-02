@@ -261,7 +261,8 @@ function App() {
   }, [devices, deviceTypeFilter, deviceOwnerFilter, deviceSearch]);
 
   useEffect(() => {
-    const assigned = devices.filter((device) => device.owner_id).length;
+    //loadAllDevice();
+    const assigned = devices.filter((device) => device.owner_id).length; //
     setDashboardState({
       totalEmployees: employees.length,
       totalDevices: devices.length,
@@ -290,6 +291,7 @@ function App() {
   const callHandleDeleteEmployee = async (employeeId) =>
   {
     await handleDeleteEmployee(employeeId, {setStatusMessage, setErrors, setEmployees, setLoadingEmployees, setLastRefreshAt});
+    await loadAllDevice();
   }
 
   // /api/deviceApi.js
